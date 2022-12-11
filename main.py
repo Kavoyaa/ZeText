@@ -148,7 +148,7 @@ def show_console():
         return
 
     global console
-    console = Text(frame, height=10, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 15), fg=text_colour)
+    console = Text(frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 15), fg=text_colour)
     console.pack(expand=True, fill=BOTH)
     console.insert("1.0", console_content)
     console_status="visible"
