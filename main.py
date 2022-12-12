@@ -4,15 +4,12 @@ from tkinter.simpledialog import askstring
 from tkinter import colorchooser
 from tkinter import messagebox
 from tkinter import ttk
-#from ttkthemes import themed_tk as tk
 import subprocess
 import time
 import os
 
 root = Tk()
-#root.get_themes()
-#root.set_theme("yaru")
-root.title("Untitled - ZeText")
+root.title("ZeText")
 root.minsize(350, 770)
 
 default_file_path = ""
@@ -23,14 +20,15 @@ theme = "light"
 dunno_what_to_name_this = False
 mode = ""
 current_open_file = ""
+tree_status = "visible"
+prev = ""
 
 primary_colour = "white"
 secondary_colour ="#e3e4ea"
 tertiary_colour = ""
-
 text_colour="black"
 
-def update_widgets():
+def theme_widgets():
     global console
     console.configure(fg=text_colour, bg=secondary_colour)
     global console_toggle_button
@@ -39,11 +37,13 @@ def update_widgets():
     editor.configure(fg=text_colour, bg=primary_colour, insertbackground=text_colour)
     global frame
     frame.configure(bg=primary_colour)
-    global tree_toggle
-    tree_toggle.configure(fg=text_colour, bg=secondary_colour)
+    global tree_toggle_button
+    tree_toggle_button.configure(fg=text_colour, bg=secondary_colour)
+    global file_tree
+    file_tree.configure(bg=secondary_colour)
     
     style.configure("Treeview", background=secondary_colour, foreground=text_colour)
-    style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)])
+    style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)], height=[('selected')])
 
 def light_theme():
     global secondary_colour, primary_colour, text_colour, theme
@@ -52,7 +52,7 @@ def light_theme():
     secondary_colour="#e3e4ea"
     text_colour="black"
     
-    update_widgets()
+    theme_widgets()
 
 def solarised_light_theme():
     global secondary_colour, primary_colour, text_colour, theme
@@ -61,7 +61,7 @@ def solarised_light_theme():
     secondary_colour="#eee8d5"
     text_colour="#556970"
 
-    update_widgets()
+    theme_widgets()
 
 def monokai_theme():
     global secondary_colour, primary_colour, text_colour, theme
@@ -70,7 +70,7 @@ def monokai_theme():
     secondary_colour="#1f201b"
     text_colour="#cbcab9"
     
-    update_widgets()
+    theme_widgets()
 
 def coffee_theme():
     global secondary_colour, primary_colour, text_colour, theme
@@ -79,7 +79,7 @@ def coffee_theme():
     secondary_colour = "#bba180"
     text_colour = "white"
     
-    update_widgets()
+    theme_widgets()
 
 def dark_theme():
     global secondary_colour, primary_colour, text_colour, theme
@@ -88,7 +88,7 @@ def dark_theme():
     secondary_colour = "#1f1f1f"
     text_colour = "white"
     
-    update_widgets()
+    theme_widgets()
     
 def one_dark_theme():
     global secondary_colour, primary_colour, text_colour, theme
@@ -97,7 +97,7 @@ def one_dark_theme():
     secondary_colour = "#23272c"
     text_colour = "#e7eaef"
     
-    update_widgets()
+    theme_widgets()
 
 def black_n_white():
     global secondary_colour, primary_colour, text_colour, theme
@@ -106,17 +106,20 @@ def black_n_white():
     secondary_colour = "#2c2c2c"
     text_colour = "#2c2c2c"
     
-    update_widgets()
-    global console, console_toggle_button
-    console_toggle_button.configure(fg="white")
-    console.configure(fg="white")
+    theme_widgets()
+    global console, console_toggle_button, tree_toggle_button
+    console_toggle_button.configure(fg="#e8e8e8")
+    console.configure(fg="#e8e8e8")
+    tree_toggle_button.configure(fg="#e8e8e8")
+    style.configure("Treeview", foreground="#e8e8e8")
+    style.map("Treeview", foreground=[('selected', "black")])
 
 def set_primary_colour():
     global primary_colour
     primary_colour = colorchooser.askcolor(title ="Colour Chooser")[1]
     print(primary_colour)
     try:
-        update_widgets()
+        theme_widgets()
     except:
         messagebox.showerror("Error", "Invalid hex code.")
 
@@ -124,7 +127,7 @@ def set_secondary_colour():
     global secondary_colour
     secondary_colour = colorchooser.askcolor(title ="Colour Chooser")[1]
     try:
-        update_widgets()
+        theme_widgets()
     except:
         messagebox.showerror("Error", "Invalid hex code.")
 
@@ -132,7 +135,7 @@ def set_text_colour():
     global text_colour
     text_colour = colorchooser.askcolor(title ="Colour Chooser")[1]
     try:
-        update_widgets()
+        theme_widgets()
     except:
         messagebox.showerror("Error", "Invalid hex code.")
 
@@ -148,17 +151,15 @@ def show_console():
         return
 
     global console
-    console = Text(frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 15), fg=text_colour)
-    console.pack(expand=True, fill=BOTH)
-    console.insert("1.0", console_content)
-    console_status="visible"
+    console.pack(side=BOTTOM, expand=True, fill=BOTH)
     console_toggle_button.config(text="CONSOLE ⮟")
+    console_status = "visible"
 
 def hide_console():
     global console_status
     global console
     console_status = "hidden"
-    console.destroy()
+    console.pack_forget()
     console_toggle_button.config(text="CONSOLE ⮝")
 
 def console_toggle():
@@ -168,12 +169,33 @@ def console_toggle():
     else:
         show_console()
 
+def show_tree():
+    global tv, tree_toggle_button, tree_status
+    tree_toggle_button.configure(text="FILE TREE ⮟", width=3, anchor='w', font=('JetBrains Mono', 9))
+    tv.pack(expand=TRUE, anchor='n', fill=BOTH)
+    tree_status = "visible"
+
+def hide_tree():
+    global tv, tree_toggle_button, tree_status
+    tv.pack_forget()
+    tree_toggle_button.pack_forget()
+    tree_toggle_button.pack(side=TOP, fill=BOTH)
+    tree_toggle_button.configure(text="F\nI\nL\nE\n\nT\nR\nE\nE\n⮞", width=3, anchor='center', font=('JetBrains Mono', 9))
+    tree_status = "hidden"
+    
+def tree_toggle():
+    global tree_status
+    if tree_status == "visible":
+        hide_tree()
+    else:
+        show_tree()
+
 def run():
     global default_file_path
     global run_command
-    
-    if default_file_path == "":
-        save_as()
+    if mode == "file":
+        if default_file_path == "":
+            save_as()
 
     if run_command == "":
         set_run_command()
@@ -201,18 +223,24 @@ def set_run_command():
 
 def save_as():
     global mode, current_open_file
-   
-    file_path = asksaveasfilename()
+    if mode == "file":
+        file_path = asksaveasfilename()
 
-    with open(file_path, "w") as file:
-        code = editor.get("1.0", END)
-        file.write(code)
-        
-    global default_file_path
-    default_file_path = file_path
-    file_name = default_file_path.split("/")[-1]
-    root.title(f"{file_name} - ZeText")
+        with open(file_path, "w") as file:
+            code = editor.get("1.0", END)
+            file.write(code)
+            
+        global default_file_path
+        default_file_path = file_path
+        file_name = default_file_path.split("/")[-1]
+        root.title(f"{file_name} - ZeText")
     
+    if mode == "folder":
+        file_path = asksaveasfilename()
+
+        with open(file_path, "w") as file:
+            code = editor.get("1.0", END)
+            file.write(code)
 
 def save():
     global default_file_path, mode, current_open_file
@@ -239,6 +267,8 @@ def save():
 
 def open_file():
     file_path = askopenfilename()
+    if file_path == "":
+        return ""
 
     with open(file_path, "r") as file:
         code = file.read()
@@ -315,19 +345,9 @@ themes_button.add_cascade(label="Custom", menu=themes_button_custom)
 
 nav_bar.add_cascade(label="Themes", menu=themes_button)
 
-#root.config(menu=nav_bar)
-
-
 frame = LabelFrame(root, bd=0, relief=FLAT, bg=primary_colour)
-#frame.pack(side=RIGHT, expand=True, fill=BOTH)
-
-
 
 editor = Text(frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour)
-
-
-
-
 editor.pack(expand=True, fill=BOTH, padx=(5,0))
 
 console_toggle_button = Button(frame, text="CONSOLE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=console_toggle)
@@ -336,20 +356,20 @@ console_toggle_button.pack(fill=BOTH)
 console = Text(frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 13))
 console.pack(side=BOTTOM, expand=True, fill=BOTH)
 
-f = Frame(root, bd=0, relief=FLAT, bg='#23272c')
-#f.pack(side=LEFT, fill=BOTH)
+bottom_bar = Frame(root, bd=0, relief=FLAT)
 
+file_tree = Frame(root, bd=0, relief=FLAT, bg=secondary_colour)
 
-tree_toggle = Button(f, text="FILE TREE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=console_toggle, fg=text_colour, width=31)
-tree_toggle.pack(side=TOP, fill=BOTH)
+tree_toggle_button = Button(file_tree, text="FILE TREE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=tree_toggle, fg=text_colour, width=31)
+tree_toggle_button.pack(side=TOP, fill=BOTH)
 
-tv = ttk.Treeview(f,show='tree')
+tv = ttk.Treeview(file_tree,show='tree')
 
 style = ttk.Style()
 style.theme_use('clam')
-style.configure("Treeview", highlightthickness=0, bd=0, font=('Calibri', 11), background=secondary_colour, foreground=text_colour, activebackground='red', rowheight=25) # Modify the font of the body
-style.configure("Treeview.Heading", font=('Calibri', 15,'bold'), foreground="red") # Modify the font of the headings
-style.layout("Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})]) # Remove the borders
+style.configure("Treeview", highlightthickness=0, bd=0, font=('Calibri', 11), background=secondary_colour, foreground=text_colour, activebackground='red', rowheight=25)
+style.configure("Treeview.Heading", font=('Calibri', 15,'bold'), foreground="red") 
+style.layout("Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})]) 
 style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)])
 
 def make_tv(folder):
@@ -361,16 +381,17 @@ def make_tv(folder):
     tv_items = {}
     file_contents = {}
     
-    tv.heading('#0', anchor='w')
-    path=os.path.abspath(directory)
-    node=tv.insert('','end',text=path,open=True)
-    def traverse_dir(parent,path):
+    tv.heading("#0", anchor="w")
+    file_path = os.path.abspath(directory)
+    tv_item = tv.insert("", END,text=file_path.replace("\\", "/").split('/')[-1], open=True)
+
+    def traverse_dir(parent, path):
         global file_contents, tv_items, directory
         for d in os.listdir(path):
             full_path=os.path.join(path,d)
             tv_items[d] = full_path
             try:
-                with open(tv_items[d], 'r') as f:
+                with open(tv_items[d], "r") as f:
                     try:
                         file_contents[d] = {"content": f.read(), "readable": True}
                     except:
@@ -378,28 +399,13 @@ def make_tv(folder):
             except Exception as e:
                 print(e.__str__())
             isdir = os.path.isdir(full_path)
-            id=tv.insert(parent,'end',text=d,open=False, tags=r"{}".format(full_path))
+            id=tv.insert(parent, END, text=d, open=False, tags=r"{}".format(full_path))
             if isdir:
-                traverse_dir(id,full_path)
+                traverse_dir(id, full_path)
         
-    traverse_dir(node,path)
-    print(tv_items)
-    print(file_contents)
+    traverse_dir(tv_item, file_path)
 
-    '''
-    for item in list(tv_items.keys()):
-        try:
-            with open(tv_items[item], 'r') as f:
-                try:
-                    file_contents[item] = f.read()
-                except:
-                    print(item)
-        except Exception as e:
-            print(e.__str__())
-    print(file_contents)
-    '''
-tv.pack(expand=TRUE, anchor='n', fill=BOTH)
-prev = ""
+tv.pack(expand=TRUE, anchor="n", fill=BOTH)
 
 def on_tv_click(e):
     global editor, dunno_what_to_name_this, file_contents, prev, current_open_file
@@ -407,19 +413,19 @@ def on_tv_click(e):
     selected_item = tv.focus()
     values = tv.item(selected_item)
 
-    
-    
-    
     if os.path.isdir(tv_items[values['text']]):
         return
     current_open_file = tv_items[values["text"]]
     if dunno_what_to_name_this == True: file_contents[prev]["content"] = editor.get("1.0", END)
     
+    editor.configure(state=NORMAL)
     editor.delete("1.0","end")
     if file_contents[values['text']]["readable"]:
         editor.insert("1.0", file_contents[values['text']]["content"])
     else:
-        messagebox.showerror('Error', "cant read")
+        messagebox.showerror('Error', "Couldn't display file.")
+        editor.insert("1.0", "There was an error displaying the file.")
+        editor.configure(state=DISABLED)
     
     dunno_what_to_name_this = True
     prev = values["text"].replace("\\", "/").split('/')[-1]
@@ -427,66 +433,56 @@ def on_tv_click(e):
 def save_binding(e):
     save()
 
-#tv.bind("<ButtonRelease-1>", on_tv_click)
-#root.bind("<Control-s>", save_binding)
-
-def file_opener_hp():
+def new_file_hp():
     homepage.pack_forget()
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
-    #f.pack(side=LEFT, fill=BOTH)
-
-    #tv.bind("<ButtonRelease-1>", on_tv_click)
     root.bind("<Control-s>", save_binding)
-    open_file()
+
+    global mode
+    mode = "file"
+
+def file_opener_hp():
+    file = open_file()
+    if file == "":
+        return
+    homepage.pack_forget()
+    root.config(menu=nav_bar)
+    frame.pack(side=RIGHT, expand=True, fill=BOTH)
+
+    root.bind("<Control-s>", save_binding)  
 
     global mode
     mode = "file"
 
 def folder_opener_hp():
-    
+    folder = askdirectory()
+    if folder == "":
+        return
     homepage.pack_forget()
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
-    folder = askdirectory()
     
-    f.pack(side=LEFT, fill=BOTH)
+    file_tree.pack(side=LEFT, fill=BOTH)
 
     tv.bind("<ButtonRelease-1>", on_tv_click)
     root.bind("<Control-s>", save_binding)
 
     make_tv(folder)
-    f.pack_forget()
-    f.pack(side=LEFT, fill=BOTH)
-    
+    file_tree.pack_forget()
+    file_tree.pack(side=LEFT, fill=BOTH)
 
     global mode
     mode = "folder"
     
-
-
 homepage = Frame(root)
 
 zetext = Label(homepage, text="ZeText", anchor=CENTER).pack()
-open_file_hp = Button(homepage, text="Open File", anchor=CENTER, command=file_opener_hp).pack()
-open_folder_hp = Button(homepage, text="Open Folder", anchor=CENTER, command=folder_opener_hp).pack()
+new_file_hp = Button(homepage, text="New File", anchor=CENTER, command=new_file_hp, bd=0, relief=FLAT, bg="#2199d4").pack(pady=10)
+open_file_hp = Button(homepage, text="Open File", anchor=CENTER, command=file_opener_hp, bd=0, relief=FLAT, bg="#2199d4").pack(pady=10)
+open_folder_hp = Button(homepage, text="Open Folder", anchor=CENTER, command=folder_opener_hp, bd=0, relief=FLAT, bg="#2199d4").pack(pady=10)
 
 homepage.pack()
 
-
-
 root.mainloop()
-#file_contents[values["text"].replace("\\", "/").split('/')[-1]]["content"] = editor.get("1.0", END)
-'''
-root.config(menu=nav_bar)
-frame.pack(side=RIGHT, expand=True, fill=BOTH)
-editor.pack(expand=True, fill=BOTH, padx=(5,0))
-console_toggle_button.pack(fill=BOTH)
-console.pack(side=BOTTOM, expand=True, fill=BOTH)
-f.pack(side=LEFT, fill=BOTH)
-tree_toggle.pack(side=TOP, fill=BOTH)
-tv.pack(expand=TRUE, anchor='n', fill=BOTH)
-tv.bind("<ButtonRelease-1>", on_tv_click)
-root.bind("<Control-s>", save_binding)
-'''
