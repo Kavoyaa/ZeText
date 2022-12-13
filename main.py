@@ -7,6 +7,8 @@ from tkinter import ttk
 import subprocess
 import time
 import os
+import imghdr
+from PIL import Image, ImageTk
 
 root = Tk()
 root.title("ZeText")
@@ -22,6 +24,7 @@ mode = ""
 current_open_file = ""
 tree_status = "visible"
 prev = ""
+editor_status="visible"
 
 primary_colour = "white"
 secondary_colour ="#e3e4ea"
@@ -37,13 +40,15 @@ def theme_widgets():
     editor.configure(fg=text_colour, bg=primary_colour, insertbackground=text_colour)
     global frame
     frame.configure(bg=primary_colour)
+    global image_label
+    image_label.configure(bg=primary_colour)
     global tree_toggle_button
     tree_toggle_button.configure(fg=text_colour, bg=secondary_colour)
     global file_tree
     file_tree.configure(bg=secondary_colour)
     
     style.configure("Treeview", background=secondary_colour, foreground=text_colour)
-    style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)], height=[('selected')])
+    style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)])
 
 def light_theme():
     global secondary_colour, primary_colour, text_colour, theme
@@ -243,7 +248,7 @@ def save_as():
             file.write(code)
 
 def save():
-    global default_file_path, mode, current_open_file
+    global default_file_path, mode, current_open_file, file_contents
     if mode == "file":
         if default_file_path == "":
             file_path = asksaveasfilename()
@@ -259,22 +264,29 @@ def save():
         root.title(f"{file_name} - ZeText")
     
     if mode == "folder":
-        print(current_open_file)
+        if file_contents[current_open_file.replace("\\", "/").split('/')[-1]]["readable"] == False: return
         with open(current_open_file, "w") as f:
             code = editor.get("1.0", END)
             f.write(code)
-            print(current_open_file)
 
 def open_file():
+    global editor, image_label
+
     file_path = askopenfilename()
     if file_path == "":
         return ""
 
-    with open(file_path, "r") as file:
-        code = file.read()
+    image_type = imghdr.what(file_path)
+    if image_type == None:
+        with open(file_path, "r") as file:
+            code = file.read()
 
-        editor.delete("1.0", END)
-        editor.insert("1.0", code)
+            editor.delete("1.0", END)
+            editor.insert("1.0", code)
+    else:
+        editor.pack_forget()
+
+
 
     global default_file_path
     default_file_path = file_path
@@ -350,10 +362,13 @@ frame = LabelFrame(root, bd=0, relief=FLAT, bg=primary_colour)
 editor = Text(frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour)
 editor.pack(expand=True, fill=BOTH, padx=(5,0))
 
-console_toggle_button = Button(frame, text="CONSOLE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=console_toggle)
+console_frame = Frame(frame, bd=0, relief=FLAT)
+console_frame.pack(side=BOTTOM, fill=BOTH)
+
+console_toggle_button = Button(console_frame, text="CONSOLE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=console_toggle)
 console_toggle_button.pack(fill=BOTH)
 
-console = Text(frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 13))
+console = Text(console_frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 13))
 console.pack(side=BOTTOM, expand=True, fill=BOTH)
 
 bottom_bar = Frame(root, bd=0, relief=FLAT)
@@ -362,6 +377,8 @@ file_tree = Frame(root, bd=0, relief=FLAT, bg=secondary_colour)
 
 tree_toggle_button = Button(file_tree, text="FILE TREE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=tree_toggle, fg=text_colour, width=31)
 tree_toggle_button.pack(side=TOP, fill=BOTH)
+
+image_label = Label(frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour)
 
 tv = ttk.Treeview(file_tree,show='tree')
 
@@ -407,28 +424,52 @@ def make_tv(folder):
 
 tv.pack(expand=TRUE, anchor="n", fill=BOTH)
 
+# messy code warning, i never ever want to touch this part again
 def on_tv_click(e):
-    global editor, dunno_what_to_name_this, file_contents, prev, current_open_file
+    global editor, dunno_what_to_name_this, file_contents, prev, current_open_file, image_label, editor_status
     
     selected_item = tv.focus()
     values = tv.item(selected_item)
+    image_type = imghdr.what(tv_items[values["text"]])
 
     if os.path.isdir(tv_items[values['text']]):
         return
     current_open_file = tv_items[values["text"]]
-    if dunno_what_to_name_this == True: file_contents[prev]["content"] = editor.get("1.0", END)
-    
+    if dunno_what_to_name_this == True: 
+        if editor_status == "visible":
+            file_contents[prev]["content"] = editor.get("1.0", END)
+
+    image_label.pack_forget()
+    editor.pack(expand=True, fill=BOTH, padx=(5,0))
+    editor_status == "visible"
     editor.configure(state=NORMAL)
-    editor.delete("1.0","end")
+
     if file_contents[values['text']]["readable"]:
+        editor.delete("1.0","end")
         editor.insert("1.0", file_contents[values['text']]["content"])
+        prev = values["text"].replace("\\", "/").split('/')[-1]
     else:
+        if image_type != None:
+            if dunno_what_to_name_this == True:
+                file_contents[prev]["content"] = editor.get("1.0", END)
+            editor.pack_forget()
+            editor_status = "hidden"
+            global image
+            #image = ImageTk.PhotoImage(Image.open(tv_items[values["text"]]).resize((2, 2), Image.ANTIALIAS))
+            image = PhotoImage(file=tv_items[values["text"]]).subsample(4, 4    )
+            image_label.configure(image=image)
+            
+            image_label.pack(expand=True, fill=BOTH, padx=(5,0))
+            return
+            
         messagebox.showerror('Error', "Couldn't display file.")
+        prev = values["text"].replace("\\", "/").split('/')[-1]
+   
+        editor.delete("1.0","end")
         editor.insert("1.0", "There was an error displaying the file.")
         editor.configure(state=DISABLED)
     
     dunno_what_to_name_this = True
-    prev = values["text"].replace("\\", "/").split('/')[-1]
     
 def save_binding(e):
     save()
