@@ -8,11 +8,10 @@ import subprocess
 import time
 import os
 import imghdr
-from PIL import Image, ImageTk
 
 root = Tk()
 root.title("ZeText")
-root.minsize(350, 770)
+root.minsize(350, 200)
 
 default_file_path = ""
 run_command = ""
@@ -286,7 +285,10 @@ def open_file():
     else:
         editor.pack_forget()
 
-
+        global image
+        image = PhotoImage(file=file_path).subsample(4, 4)
+        image_label.configure(image=image)
+        image_label.pack(expand=True, fill=BOTH, padx=(5,0))       
 
     global default_file_path
     default_file_path = file_path
@@ -407,14 +409,13 @@ def make_tv(folder):
         for d in os.listdir(path):
             full_path=os.path.join(path,d)
             tv_items[d] = full_path
-            try:
-                with open(tv_items[d], "r") as f:
-                    try:
-                        file_contents[d] = {"content": f.read(), "readable": True}
-                    except:
+            
+            with open(tv_items[d], "r", encoding="utf-8") as f:
+                try:
+                     file_contents[d] = {"content": f.read(), "readable": True}
+                except:
                         file_contents[d] = {"content": "", "readable": False}
-            except Exception as e:
-                print(e.__str__())
+
             isdir = os.path.isdir(full_path)
             id=tv.insert(parent, END, text=d, open=False, tags=r"{}".format(full_path))
             if isdir:
@@ -456,7 +457,7 @@ def on_tv_click(e):
             editor_status = "hidden"
             global image
             #image = ImageTk.PhotoImage(Image.open(tv_items[values["text"]]).resize((2, 2), Image.ANTIALIAS))
-            image = PhotoImage(file=tv_items[values["text"]]).subsample(4, 4    )
+            image = PhotoImage(file=tv_items[values["text"]]).subsample(4, 4)
             image_label.configure(image=image)
             
             image_label.pack(expand=True, fill=BOTH, padx=(5,0))
@@ -476,6 +477,7 @@ def save_binding(e):
 
 def new_file_hp():
     homepage.pack_forget()
+    root.minsize(350, 800)
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
@@ -489,6 +491,7 @@ def file_opener_hp():
     if file == "":
         return
     homepage.pack_forget()
+    root.minsize(350, 800)
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
@@ -502,6 +505,7 @@ def folder_opener_hp():
     if folder == "":
         return
     homepage.pack_forget()
+    root.minsize(1200, 800)
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
     
