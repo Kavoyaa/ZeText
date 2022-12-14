@@ -11,7 +11,8 @@ import imghdr
 
 root = Tk()
 root.title("ZeText")
-root.minsize(350, 200)
+root.minsize(550, 355)
+root.resizable(False, False)
 
 default_file_path = ""
 run_command = ""
@@ -386,10 +387,15 @@ tv = ttk.Treeview(file_tree,show='tree')
 
 style = ttk.Style()
 style.theme_use('clam')
-style.configure("Treeview", highlightthickness=0, bd=0, font=('Calibri', 11), background=secondary_colour, foreground=text_colour, activebackground='red', rowheight=25)
+style.configure("Treeview", highlightthickness=0, bd=0, font=('Calibri', 11), background=secondary_colour, foreground=text_colour, activebackground='red', rowheight=30)
 style.configure("Treeview.Heading", font=('Calibri', 15,'bold'), foreground="red") 
 style.layout("Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})]) 
 style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)])
+
+
+folder_img = PhotoImage(file="icons/folder.png").subsample(3, 3)
+picture_img = PhotoImage(file="icons/picture.png").subsample(3, 3)
+file_img = PhotoImage(file="icons/file.png").subsample(3, 3)
 
 def make_tv(folder):
     if folder == '':
@@ -402,24 +408,31 @@ def make_tv(folder):
     
     tv.heading("#0", anchor="w")
     file_path = os.path.abspath(directory)
-    tv_item = tv.insert("", END,text=file_path.replace("\\", "/").split('/')[-1], open=True)
+    tv_item = tv.insert("", END, text=" "+file_path.replace("\\", "/").split('/')[-1], open=True, image=folder_img)
 
     def traverse_dir(parent, path):
         global file_contents, tv_items, directory
-        for d in os.listdir(path):
-            full_path=os.path.join(path,d)
-            tv_items[d] = full_path
+        for file in os.listdir(path):
             
-            with open(tv_items[d], "r", encoding="utf-8") as f:
-                try:
-                     file_contents[d] = {"content": f.read(), "readable": True}
-                except:
-                        file_contents[d] = {"content": "", "readable": False}
+            full_path=os.path.join(path, file)
+            tv_items[file] = full_path
+            try:
+                with open(tv_items[file], "r", encoding="utf-8") as f:
+                    try:
+                        file_contents[file] = {"content": f.read(), "readable": True}
+                    except:
+                            file_contents[file] = {"content": "", "readable": False}
+            except: pass
 
             isdir = os.path.isdir(full_path)
-            id=tv.insert(parent, END, text=d, open=False, tags=r"{}".format(full_path))
+            
             if isdir:
+                id=tv.insert(parent, END, text=" "+file, open=False, tags=r"{}".format(full_path), image=folder_img)
                 traverse_dir(id, full_path)
+            elif imghdr.what(full_path) != None:
+                id=tv.insert(parent, END, text=" "+file, open=False, tags=r"{}".format(full_path), image=picture_img)
+            else:
+                id=tv.insert(parent, END, text=" "+file, open=False, tags=r"{}".format(full_path), image=file_img)
         
     traverse_dir(tv_item, file_path)
 
@@ -431,11 +444,11 @@ def on_tv_click(e):
     
     selected_item = tv.focus()
     values = tv.item(selected_item)
-    image_type = imghdr.what(tv_items[values["text"]])
+    image_type = imghdr.what(tv_items[values["text"][1:]])
 
-    if os.path.isdir(tv_items[values['text']]):
+    if os.path.isdir(tv_items[values['text'][1:]]):
         return
-    current_open_file = tv_items[values["text"]]
+    current_open_file = tv_items[values["text"][1:]]
     if dunno_what_to_name_this == True: 
         if editor_status == "visible":
             file_contents[prev]["content"] = editor.get("1.0", END)
@@ -445,10 +458,10 @@ def on_tv_click(e):
     editor_status == "visible"
     editor.configure(state=NORMAL)
 
-    if file_contents[values['text']]["readable"]:
+    if file_contents[values['text'][1:]]["readable"]:
         editor.delete("1.0","end")
-        editor.insert("1.0", file_contents[values['text']]["content"])
-        prev = values["text"].replace("\\", "/").split('/')[-1]
+        editor.insert("1.0", file_contents[values['text'][1:]]["content"])
+        prev = values["text"][1:].replace("\\", "/").split('/')[-1]
     else:
         if image_type != None:
             if dunno_what_to_name_this == True:
@@ -457,14 +470,14 @@ def on_tv_click(e):
             editor_status = "hidden"
             global image
             #image = ImageTk.PhotoImage(Image.open(tv_items[values["text"]]).resize((2, 2), Image.ANTIALIAS))
-            image = PhotoImage(file=tv_items[values["text"]]).subsample(4, 4)
+            image = PhotoImage(file=tv_items[values["text"][1:]]).subsample(4, 4)
             image_label.configure(image=image)
             
             image_label.pack(expand=True, fill=BOTH, padx=(5,0))
             return
             
         messagebox.showerror('Error', "Couldn't display file.")
-        prev = values["text"].replace("\\", "/").split('/')[-1]
+        prev = values["text"][1:].replace("\\", "/").split('/')[-1]
    
         editor.delete("1.0","end")
         editor.insert("1.0", "There was an error displaying the file.")
@@ -475,9 +488,10 @@ def on_tv_click(e):
 def save_binding(e):
     save()
 
-def new_file_hp():
-    homepage.pack_forget()
+def new_file_opener_hp():
+    homepage.place_forget()
     root.minsize(350, 800)
+    root.resizable(True, True)
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
@@ -490,8 +504,9 @@ def file_opener_hp():
     file = open_file()
     if file == "":
         return
-    homepage.pack_forget()
+    homepage.place_forget()
     root.minsize(350, 800)
+    root.resizable(True, True)
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
@@ -504,8 +519,9 @@ def folder_opener_hp():
     folder = askdirectory()
     if folder == "":
         return
-    homepage.pack_forget()
+    homepage.place_forget()
     root.minsize(1200, 800)
+    root.resizable(True, True)
     root.config(menu=nav_bar)
     frame.pack(side=RIGHT, expand=True, fill=BOTH)
     
@@ -521,13 +537,14 @@ def folder_opener_hp():
     global mode
     mode = "folder"
     
-homepage = Frame(root)
+homepage = Frame(root, bd=0, relief=FLAT)
+#text = Label(homepage, text="Welcome to", fg="#595959", font=("Helvatica", "8")).pack()
+zetext = Label(homepage, text="ZeText", font=("Helvatica", "40"), fg="#4f555e").pack(pady=(0, 9))
 
-zetext = Label(homepage, text="ZeText", anchor=CENTER).pack()
-new_file_hp = Button(homepage, text="New File", anchor=CENTER, command=new_file_hp, bd=0, relief=FLAT, bg="#2199d4").pack(pady=10)
-open_file_hp = Button(homepage, text="Open File", anchor=CENTER, command=file_opener_hp, bd=0, relief=FLAT, bg="#2199d4").pack(pady=10)
-open_folder_hp = Button(homepage, text="Open Folder", anchor=CENTER, command=folder_opener_hp, bd=0, relief=FLAT, bg="#2199d4").pack(pady=10)
+new_file_hp = Button(homepage, text="New File", command=new_file_opener_hp, bd=0, relief=FLAT, bg="#33b0ed", activebackground="#46b5ec", padx=4, width=22, height=2).pack(pady=6)
+open_file_hp = Button(homepage, text="Open File",  command=file_opener_hp, bd=0, relief=FLAT, bg="#33b0ed", activebackground="#46b5ec", padx=4, width=22, height=2).pack(pady=6)
+open_folder_hp = Button(homepage, text="Open Folder", command=folder_opener_hp, bd=0, relief=FLAT, bg="#33b0ed", activebackground="#46b5ec", padx=4, width=22, height=2).pack(pady=6)
 
-homepage.pack()
+homepage.place(relx=.5, rely=.5, anchor= CENTER)
 
 root.mainloop()
