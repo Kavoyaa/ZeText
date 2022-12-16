@@ -29,87 +29,83 @@ editor_status="visible"
 primary_colour = "white"
 secondary_colour ="#e3e4ea"
 tertiary_colour = ""
-text_colour="black"
+primary_text_colour = "black"
+secondary_text_colour = "grey"
 
 def theme_widgets():
     global console
-    console.configure(fg=text_colour, bg=secondary_colour)
+    console.configure(fg=primary_text_colour, bg=secondary_colour)
     global console_toggle_button
-    console_toggle_button.configure(fg=text_colour, bg=secondary_colour)
+    console_toggle_button.configure(fg=primary_text_colour, bg=secondary_colour)
     global editor
-    editor.configure(fg=text_colour, bg=primary_colour, insertbackground=text_colour)
-    global frame
-    frame.configure(bg=primary_colour)
+    editor.configure(fg=primary_text_colour, bg=primary_colour, insertbackground=primary_text_colour)
+    global right_frame
+    right_frame.configure(bg=primary_colour)
     global image_label
     image_label.configure(bg=primary_colour)
     global tree_toggle_button
-    tree_toggle_button.configure(fg=text_colour, bg=secondary_colour)
-    global file_tree
-    file_tree.configure(bg=secondary_colour)
+    tree_toggle_button.configure(fg=primary_text_colour, bg=secondary_colour)
+    global left_frame
+    left_frame.configure(bg=secondary_colour)
+    global line_nums
+    line_nums.configure(bg=primary_colour, fg=secondary_text_colour)
+    global text_frame
+    text_frame.configure(bg=primary_colour)
     
-    style.configure("Treeview", background=secondary_colour, foreground=text_colour)
-    style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)])
+    style.configure("Treeview", background=secondary_colour, foreground=primary_text_colour)
+    style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', primary_text_colour)])
 
 def light_theme():
-    global secondary_colour, primary_colour, text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme
 
     primary_colour = "white"
     secondary_colour="#e3e4ea"
-    text_colour="black"
+    primary_text_colour="black"
     
     theme_widgets()
 
 def solarised_light_theme():
-    global secondary_colour, primary_colour, text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme
 
     primary_colour = "#fdf6e3"
     secondary_colour="#eee8d5"
-    text_colour="#556970"
+    primary_text_colour="#556970"
 
     theme_widgets()
 
 def monokai_theme():
-    global secondary_colour, primary_colour, text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme
 
     primary_colour = "#272822"
     secondary_colour="#1f201b"
-    text_colour="#cbcab9"
-    
-    theme_widgets()
-
-def coffee_theme():
-    global secondary_colour, primary_colour, text_colour, theme
-
-    primary_colour = "#d9ba93"
-    secondary_colour = "#bba180"
-    text_colour = "white"
+    primary_text_colour="#cbcab9"
     
     theme_widgets()
 
 def dark_theme():
-    global secondary_colour, primary_colour, text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme
 
     primary_colour = "#272727"
     secondary_colour = "#1f1f1f"
-    text_colour = "white"
+    primary_text_colour = "white"
     
     theme_widgets()
     
 def one_dark_theme():
-    global secondary_colour, primary_colour, text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme
 
     primary_colour = "#282c34"
     secondary_colour = "#23272c"
-    text_colour = "#e7eaef"
+    primary_text_colour = "#e7eaef"
     
     theme_widgets()
 
 def black_n_white():
-    global secondary_colour, primary_colour, text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme
 
     primary_colour = "white"
     secondary_colour = "#2c2c2c"
-    text_colour = "#2c2c2c"
+    primary_text_colour = "#2c2c2c"
     
     theme_widgets()
     global console, console_toggle_button, tree_toggle_button
@@ -136,9 +132,17 @@ def set_secondary_colour():
     except:
         messagebox.showerror("Error", "Invalid hex code.")
 
-def set_text_colour():
-    global text_colour
-    text_colour = colorchooser.askcolor(title ="Colour Chooser")[1]
+def set_primary_text_colour():
+    global primary_text_colour
+    primary_text_colour = colorchooser.askcolor(title ="Colour Chooser")[1]
+    try:
+        theme_widgets()
+    except:
+        messagebox.showerror("Error", "Invalid hex code.")
+
+def set_secondary_text_colour():
+    global secondary_text_colour
+    secondary_text_colour = colorchooser.askcolor(title ="Colour Chooser")[1]
     try:
         theme_widgets()
     except:
@@ -278,7 +282,7 @@ def open_file():
 
     image_type = imghdr.what(file_path)
     if image_type == None:
-        with open(file_path, "r") as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             code = file.read()
 
             editor.delete("1.0", END)
@@ -346,7 +350,6 @@ themes_button = Menu(nav_bar, tearoff=0, bd=0, relief=FLAT, background="#e3e4ea"
 themes_button.add_command(label="Light Theme", command=light_theme)
 themes_button.add_command(label="Solarised Light Theme", command=solarised_light_theme)
 themes_button.add_command(label="Dark Theme", command=dark_theme)
-themes_button.add_command(label="Coffee Theme", command=coffee_theme)
 themes_button.add_command(label="One Dark Theme", command=one_dark_theme)
 themes_button.add_command(label="Monokai Theme", command=monokai_theme)
 themes_button.add_command(label="Black N White  Theme", command=black_n_white)
@@ -354,21 +357,29 @@ themes_button.add_command(label="Black N White  Theme", command=black_n_white)
 themes_button_custom = Menu(themes_button, tearoff=0, bd=0, relief=FLAT)
 themes_button_custom.add_command(label="Primary Colour", command=set_primary_colour)
 themes_button_custom.add_command(label="Seconday Colour", command=set_secondary_colour)
-themes_button_custom.add_command(label="Text Colour", command=set_text_colour)
+themes_button_custom.add_command(label="Primary Text Colour", command=set_primary_text_colour)
+themes_button_custom.add_command(label="Secondary Text Colour", command=set_secondary_text_colour)
 themes_button.add_separator()
 themes_button.add_cascade(label="Custom", menu=themes_button_custom)
 
 nav_bar.add_cascade(label="Themes", menu=themes_button)
 
-frame = LabelFrame(root, bd=0, relief=FLAT, bg=primary_colour)
+right_frame = Frame(root, bd=0, relief=FLAT, bg=primary_colour)
 
-editor = Text(frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour)
+text_frame = Frame(right_frame, bd=0, relief=FLAT, bg=primary_colour)
+text_frame.pack(expand=True, fill=BOTH)
+
+line_nums = Text(text_frame, height=25, bg=primary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 15), width=5, fg="grey")
+line_nums.tag_configure("right", justify='right')
+line_nums.pack(side=LEFT, anchor="n", fill=BOTH)
+
+editor = Text(text_frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour, wrap="none")
 editor.pack(expand=True, fill=BOTH, padx=(5,0))
 
-console_frame = Frame(frame, bd=0, relief=FLAT)
+console_frame = Frame(right_frame, bd=0, relief=FLAT)
 console_frame.pack(side=BOTTOM, fill=BOTH)
 
-console_toggle_button = Button(console_frame, text="CONSOLE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=console_toggle)
+console_toggle_button = Button(console_frame, text="CONSOLE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground=secondary_colour, command=console_toggle)
 console_toggle_button.pack(fill=BOTH)
 
 console = Text(console_frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 13))
@@ -376,22 +387,23 @@ console.pack(side=BOTTOM, expand=True, fill=BOTH)
 
 bottom_bar = Frame(root, bd=0, relief=FLAT)
 
-file_tree = Frame(root, bd=0, relief=FLAT, bg=secondary_colour)
+left_frame = Frame(root, bd=0, relief=FLAT, bg=secondary_colour)
+file_tree = Frame(left_frame, bd=0, relief=FLAT, bg=secondary_colour)
+file_tree.pack(side=LEFT, fill=BOTH)
 
-tree_toggle_button = Button(file_tree, text="FILE TREE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground="#bebfc4", command=tree_toggle, fg=text_colour, width=31)
+tree_toggle_button = Button(file_tree, text="FILE TREE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground=secondary_colour, command=tree_toggle, fg=primary_text_colour, width=31)
 tree_toggle_button.pack(side=TOP, fill=BOTH)
 
-image_label = Label(frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour)
+image_label = Label(right_frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour)
 
-tv = ttk.Treeview(file_tree,show='tree')
+tv = ttk.Treeview(file_tree, show='tree')
 
 style = ttk.Style()
 style.theme_use('clam')
-style.configure("Treeview", highlightthickness=0, bd=0, font=('Calibri', 11), background=secondary_colour, foreground=text_colour, activebackground='red', rowheight=30)
+style.configure("Treeview", highlightthickness=0, bd=0, font=('Calibri', 11), background=secondary_colour, foreground=primary_text_colour, activebackground='red', rowheight=30)
 style.configure("Treeview.Heading", font=('Calibri', 15,'bold'), foreground="red") 
 style.layout("Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})]) 
-style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', text_colour)])
-
+style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', primary_text_colour)])
 
 folder_img = PhotoImage(file="icons/folder.png").subsample(3, 3)
 picture_img = PhotoImage(file="icons/picture.png").subsample(3, 3)
@@ -438,6 +450,7 @@ def make_tv(folder):
 
 tv.pack(expand=TRUE, anchor="n", fill=BOTH)
 
+
 # messy code warning, i never ever want to touch this part again
 def on_tv_click(e):
     global editor, dunno_what_to_name_this, file_contents, prev, current_open_file, image_label, editor_status
@@ -454,20 +467,23 @@ def on_tv_click(e):
             file_contents[prev]["content"] = editor.get("1.0", END)
 
     image_label.pack_forget()
-    editor.pack(expand=True, fill=BOTH, padx=(5,0))
+    text_frame.pack(expand=True, fill=BOTH, padx=(5,0))
     editor_status == "visible"
     editor.configure(state=NORMAL)
+    line_nums.pack()
 
     if file_contents[values['text'][1:]]["readable"]:
         editor.delete("1.0","end")
         editor.insert("1.0", file_contents[values['text'][1:]]["content"])
         prev = values["text"][1:].replace("\\", "/").split('/')[-1]
+        show_lines(e=None)
     else:
         if image_type != None:
             if dunno_what_to_name_this == True:
                 file_contents[prev]["content"] = editor.get("1.0", END)
-            editor.pack_forget()
+            text_frame.pack_forget()
             editor_status = "hidden"
+
             global image
             #image = ImageTk.PhotoImage(Image.open(tv_items[values["text"]]).resize((2, 2), Image.ANTIALIAS))
             image = PhotoImage(file=tv_items[values["text"][1:]]).subsample(4, 4)
@@ -484,18 +500,38 @@ def on_tv_click(e):
         editor.configure(state=DISABLED)
     
     dunno_what_to_name_this = True
+
     
 def save_binding(e):
     save()
+
+def show_lines(e):
+    nums = ""
+    for i in range(int(editor.index('end').split('.')[0])-1):
+        nums += " " + str(i+1) + " \n"
+    
+    line_nums.configure(state=NORMAL)
+    line_nums.delete("1.0", END)
+    line_nums.insert("1.0", nums[:-1])
+    line_nums.tag_add("right", 1.0, "end")
+    line_nums.configure(state=DISABLED)
+    line_nums.yview_moveto(float(editor.yview()[0]))
+
+def mousewheel_move(e):
+    line_nums.yview_moveto(float(editor.yview()[0]))
 
 def new_file_opener_hp():
     homepage.place_forget()
     root.minsize(350, 800)
     root.resizable(True, True)
     root.config(menu=nav_bar)
-    frame.pack(side=RIGHT, expand=True, fill=BOTH)
+    right_frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
     root.bind("<Control-s>", save_binding)
+    root.bind("<MouseWheel>", mousewheel_move)
+    root.bind("<Key>", show_lines)
+
+    show_lines(e=None)
 
     global mode
     mode = "file"
@@ -508,9 +544,13 @@ def file_opener_hp():
     root.minsize(350, 800)
     root.resizable(True, True)
     root.config(menu=nav_bar)
-    frame.pack(side=RIGHT, expand=True, fill=BOTH)
+    right_frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
     root.bind("<Control-s>", save_binding)  
+    root.bind("<MouseWheel>", mousewheel_move)
+    root.bind("<Key>", show_lines)
+
+    show_lines(e=None)
 
     global mode
     mode = "file"
@@ -523,19 +563,24 @@ def folder_opener_hp():
     root.minsize(1200, 800)
     root.resizable(True, True)
     root.config(menu=nav_bar)
-    frame.pack(side=RIGHT, expand=True, fill=BOTH)
+    right_frame.pack(side=RIGHT, expand=True, fill=BOTH)
     
-    file_tree.pack(side=LEFT, fill=BOTH)
+    left_frame.pack(side=LEFT, fill=BOTH)
 
     tv.bind("<ButtonRelease-1>", on_tv_click)
     root.bind("<Control-s>", save_binding)
+    #root.bind("<Control-l>", show_lines)
+    root.bind("<MouseWheel>", mousewheel_move)
+    root.bind("<Key>", show_lines)
 
     make_tv(folder)
-    file_tree.pack_forget()
-    file_tree.pack(side=LEFT, fill=BOTH)
+    left_frame.pack_forget()
+    left_frame.pack(side=LEFT, fill=BOTH)
+
+    editor.configure(state=DISABLED)
 
     global mode
-    mode = "folder"
+    mode = "folder"   
     
 homepage = Frame(root, bd=0, relief=FLAT)
 #text = Label(homepage, text="Welcome to", fg="#595959", font=("Helvatica", "8")).pack()
