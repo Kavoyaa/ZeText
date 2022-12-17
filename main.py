@@ -16,8 +16,8 @@ root.resizable(False, False)
 
 default_file_path = ""
 run_command = ""
-console_content = ""
-console_status = "visible"
+output_content = ""
+output_window_status = "visible"
 theme = "light"
 dunno_what_to_name_this = False
 mode = ""
@@ -32,11 +32,25 @@ tertiary_colour = ""
 primary_text_colour = "black"
 secondary_text_colour = "grey"
 
+def enable_bindings(mode):
+    if mode == "file":
+        root.bind("<Control-s>", save_binding)
+        root.bind("<MouseWheel>", mousewheel_move)
+        root.bind("<Key>", show_lines)
+    else:
+        tv.bind("<ButtonRelease-1>", on_tv_click)
+        root.bind("<Control-s>", save_binding)
+        root.bind("<MouseWheel>", mousewheel_move)
+        root.bind("<Key>", show_lines)
+        root.bind("<Control-Shift-S>", save_as)
+        root.bind("<F5>", run)
+        root.bind("<Control-F5>", set_run_command)
+
 def theme_widgets():
-    global console
-    console.configure(fg=primary_text_colour, bg=secondary_colour)
-    global console_toggle_button
-    console_toggle_button.configure(fg=primary_text_colour, bg=secondary_colour)
+    global output
+    output.configure(fg=primary_text_colour, bg=secondary_colour)
+    global output_toggle_button
+    output_toggle_button.configure(fg=primary_text_colour, bg=secondary_colour, activebackground=secondary_colour, activeforeground=primary_text_colour)
     global editor
     editor.configure(fg=primary_text_colour, bg=primary_colour, insertbackground=primary_text_colour)
     global right_frame
@@ -44,9 +58,11 @@ def theme_widgets():
     global image_label
     image_label.configure(bg=primary_colour)
     global tree_toggle_button
-    tree_toggle_button.configure(fg=primary_text_colour, bg=secondary_colour)
+    tree_toggle_button.configure(fg=primary_text_colour, bg=secondary_colour, activebackground=secondary_colour, activeforeground=primary_text_colour)
     global left_frame
     left_frame.configure(bg=secondary_colour)
+    global file_tree
+    file_tree.configure(bg=secondary_colour)
     global line_nums
     line_nums.configure(bg=primary_colour, fg=secondary_text_colour)
     global text_frame
@@ -56,61 +72,67 @@ def theme_widgets():
     style.map("Treeview", background=[('selected', primary_colour)], foreground=[('selected', primary_text_colour)])
 
 def light_theme():
-    global secondary_colour, primary_colour, primary_text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme, secondary_text_colour
 
     primary_colour = "white"
-    secondary_colour="#e3e4ea"
-    primary_text_colour="black"
+    secondary_colour ="#e3e4ea"
+    primary_text_colour ="black"
+    secondary_text_colour = "#9a9a9a"
     
     theme_widgets()
 
 def solarised_light_theme():
-    global secondary_colour, primary_colour, primary_text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme, secondary_text_colour
 
     primary_colour = "#fdf6e3"
-    secondary_colour="#eee8d5"
-    primary_text_colour="#556970"
+    secondary_colour ="#eee8d5"
+    primary_text_colour ="#556970"
+    secondary_text_colour = "#d4cdb9"
 
     theme_widgets()
 
 def monokai_theme():
-    global secondary_colour, primary_colour, primary_text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme, secondary_text_colour
 
     primary_colour = "#272822"
-    secondary_colour="#1f201b"
-    primary_text_colour="#cbcab9"
+    secondary_colour ="#1f201b"
+    primary_text_colour ="#cbcab9"
+    secondary_text_colour = "#42433f"
     
     theme_widgets()
 
 def dark_theme():
-    global secondary_colour, primary_colour, primary_text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme, secondary_text_colour
 
     primary_colour = "#272727"
     secondary_colour = "#1f1f1f"
     primary_text_colour = "white"
+    secondary_text_colour = "#4d4d4d"
     
     theme_widgets()
     
 def one_dark_theme():
-    global secondary_colour, primary_colour, primary_text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme, secondary_text_colour
 
     primary_colour = "#282c34"
     secondary_colour = "#23272c"
     primary_text_colour = "#e7eaef"
+    secondary_text_colour = "grey"
     
     theme_widgets()
 
 def black_n_white():
-    global secondary_colour, primary_colour, primary_text_colour, theme
+    global secondary_colour, primary_colour, primary_text_colour, theme, secondary_text_colour
 
     primary_colour = "white"
     secondary_colour = "#2c2c2c"
     primary_text_colour = "#2c2c2c"
+    secondary_text_colour = "grey"
     
     theme_widgets()
-    global console, console_toggle_button, tree_toggle_button
-    console_toggle_button.configure(fg="#e8e8e8")
-    console.configure(fg="#e8e8e8")
+    global output, output_toggle_button, tree_toggle_button
+    output_toggle_button.configure(fg="#e8e8e8")
+    output.configure(fg="#e8e8e8")
     tree_toggle_button.configure(fg="#e8e8e8")
     style.configure("Treeview", foreground="#e8e8e8")
     style.map("Treeview", foreground=[('selected', "black")])
@@ -148,35 +170,35 @@ def set_secondary_text_colour():
     except:
         messagebox.showerror("Error", "Invalid hex code.")
 
-def maximize_console():
+def maximize_output_window():
     pass
 
-def minimize_console():
+def minimize_output_window():
     pass
 
-def show_console():
-    global console_status
-    if console_status == "visible":
+def show_output():
+    global output_window_status
+    if output_window_status == "visible":
         return
 
-    global console
-    console.pack(side=BOTTOM, expand=True, fill=BOTH)
-    console_toggle_button.config(text="CONSOLE ⮟")
-    console_status = "visible"
+    global output
+    output.pack(side=BOTTOM, expand=True, fill=BOTH)
+    output_toggle_button.config(text="OUTPUT ⮟")
+    output_window_status = "visible"
 
-def hide_console():
-    global console_status
-    global console
-    console_status = "hidden"
-    console.pack_forget()
-    console_toggle_button.config(text="CONSOLE ⮝")
+def hide_output():
+    global output_window_status
+    global output
+    output_window_status = "hidden"
+    output.pack_forget()
+    output_toggle_button.config(text="OUTPUT ⮝")
 
-def console_toggle():
-    global console_status
-    if console_status == "visible":
-        hide_console()
+def output_toggle():
+    global output_window_status
+    if output_window_status == "visible":
+        hide_output()
     else:
-        show_console()
+        show_output()
 
 def show_tree():
     global tv, tree_toggle_button, tree_status
@@ -199,7 +221,22 @@ def tree_toggle():
     else:
         show_tree()
 
-def run():
+def run_code():
+    process = subprocess.Popen(
+        run_command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True)
+
+    output, error = process.communicate()
+    output.configure(state=NORMAL)
+    output.delete("1.0", END)
+    time.sleep(0.1)
+    output.insert(END, output)
+    output.insert(END, error)
+    output.configure(state=DISABLED)
+
+def run(e=None):
     global default_file_path
     global run_command
     if mode == "file":
@@ -209,9 +246,9 @@ def run():
     if run_command == "":
         set_run_command()
 
-    if console_status == "hidden":
-        show_console()
-    
+    if output_window_status == "hidden":
+        show_output()
+
     process = subprocess.Popen(
         run_command,
         stdout=subprocess.PIPE,
@@ -219,18 +256,21 @@ def run():
         shell=True)
 
     output, error = process.communicate()
-    console.configure(state=NORMAL)
-    console.delete("1.0", END)
+    output.configure(state=NORMAL)
+    output.delete("1.0", END)
     time.sleep(0.1)
-    console.insert(END, output)
-    console.insert(END, error)
-    console.configure(state=DISABLED)
+    output.insert(END, output)
+    output.insert(END, error)
+    output.configure(state=DISABLED)
 
-def set_run_command():
+def set_run_command(e=None):
     global run_command
     run_command = askstring(title="Set Run Command", prompt="Eg: python main.py\n(Make sure to type the correct file path.)")
 
-def save_as():
+def select_text():
+    pass
+
+def save_as(e=None):
     global mode, current_open_file
     if mode == "file":
         file_path = asksaveasfilename()
@@ -251,7 +291,7 @@ def save_as():
             code = editor.get("1.0", END)
             file.write(code)
 
-def save():
+def save(e=None):
     global default_file_path, mode, current_open_file, file_contents
     if mode == "file":
         if default_file_path == "":
@@ -312,7 +352,7 @@ file_button.add_separator()
 file_button.add_command(label="Open File", command=open_file)
 file_button.add_command(label="Open Folder")
 file_button.add_separator()
-file_button.add_command(label="Save", command=save)
+file_button.add_command(label="Save", command=save, accelerator="Ctrl+S")
 file_button.add_command(label="Save As...", command=save_as)
 file_button.add_separator()
 file_button.add_command(label="Close Window")
@@ -323,26 +363,27 @@ nav_bar.add_cascade(label="File", menu=file_button)
 
 # Edit button
 edit_button = Menu(nav_bar, tearoff=0, background="#e3e4ea", bd=0, relief=FLAT)
+edit_button.add_command(label="Select All", command=select_text, accelerator="Ctrl+/")
 
 nav_bar.add_cascade(label="Edit", menu=edit_button)
 
 # Run button
 run_button = Menu(nav_bar, tearoff=0, background="#e3e4ea", bd=0, relief=FLAT)
 
-run_button.add_command(label="Run", command=run)
-run_button.add_command(label="Set Run Command", command=set_run_command)
+run_button.add_command(label="Run", command=run, accelerator="F5")
+run_button.add_command(label="Set Run Command", command=set_run_command, accelerator="Ctrl+F5")
 
 nav_bar.add_cascade(label="Run", menu=run_button)
 
-# Console button
-console_button = Menu(nav_bar, tearoff=0, background="#e3e4ea", bd=0, relief=FLAT)
+# Output button
+output_button = Menu(nav_bar, tearoff=0, background="#e3e4ea", bd=0, relief=FLAT)
 
-console_button.add_command(label="Show Console", command=show_console)
-console_button.add_command(label="Hide Console", command=hide_console)
-console_button.add_command(label="Maximize", command=maximize_console)
-console_button.add_command(label="Minimize", command=minimize_console)
+output_button.add_command(label="Show Output", command=show_output)
+output_button.add_command(label="Hide Output", command=hide_output)
+output_button.add_command(label="Maximize", command=maximize_output_window)
+output_button.add_command(label="Minimize", command=minimize_output_window)
 
-nav_bar.add_cascade(label="Console", menu=console_button)
+nav_bar.add_cascade(label="Output", menu=output_button)
 
 # Theme button
 themes_button = Menu(nav_bar, tearoff=0, bd=0, relief=FLAT, background="#e3e4ea")
@@ -369,21 +410,21 @@ right_frame = Frame(root, bd=0, relief=FLAT, bg=primary_colour)
 text_frame = Frame(right_frame, bd=0, relief=FLAT, bg=primary_colour)
 text_frame.pack(expand=True, fill=BOTH)
 
-line_nums = Text(text_frame, height=25, bg=primary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 15), width=5, fg="grey")
+line_nums = Text(text_frame, bg=primary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 15), width=5, fg="grey")
 line_nums.tag_configure("right", justify='right')
 line_nums.pack(side=LEFT, anchor="n", fill=BOTH)
 
-editor = Text(text_frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour, wrap="none")
+editor = Text(text_frame, highlightthickness=0, bd=0, relief=FLAT, font=("JetBrains Mono", 15), bg=primary_colour, wrap="none", undo=True, autoseparators=True)
 editor.pack(expand=True, fill=BOTH, padx=(5,0))
 
-console_frame = Frame(right_frame, bd=0, relief=FLAT)
-console_frame.pack(side=BOTTOM, fill=BOTH)
+output_frame = Frame(right_frame, bd=0, relief=FLAT)
+output_frame.pack(side=BOTTOM, fill=BOTH)
 
-console_toggle_button = Button(console_frame, text="CONSOLE ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground=secondary_colour, command=console_toggle)
-console_toggle_button.pack(fill=BOTH)
+output_toggle_button = Button(output_frame, text="OUTPUT ⮟", bg=secondary_colour, anchor="w", bd=0, relief=FLAT, activebackground=secondary_colour, command=output_toggle)
+output_toggle_button.pack(fill=BOTH)
 
-console = Text(console_frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 13))
-console.pack(side=BOTTOM, expand=True, fill=BOTH)
+output = Text(output_frame, height=9, bg=secondary_colour, highlightthickness=0, bd=0, relief=FLAT, state=DISABLED, font=("JetBrains Mono", 13))
+output.pack(side=BOTTOM, expand=True, fill=BOTH)
 
 bottom_bar = Frame(root, bd=0, relief=FLAT)
 
@@ -546,10 +587,7 @@ def file_opener_hp():
     root.config(menu=nav_bar)
     right_frame.pack(side=RIGHT, expand=True, fill=BOTH)
 
-    root.bind("<Control-s>", save_binding)  
-    root.bind("<MouseWheel>", mousewheel_move)
-    root.bind("<Key>", show_lines)
-
+    enable_bindings("file")
     show_lines(e=None)
 
     global mode
@@ -559,6 +597,7 @@ def folder_opener_hp():
     folder = askdirectory()
     if folder == "":
         return
+
     homepage.place_forget()
     root.minsize(1200, 800)
     root.resizable(True, True)
@@ -567,13 +606,9 @@ def folder_opener_hp():
     
     left_frame.pack(side=LEFT, fill=BOTH)
 
-    tv.bind("<ButtonRelease-1>", on_tv_click)
-    root.bind("<Control-s>", save_binding)
-    #root.bind("<Control-l>", show_lines)
-    root.bind("<MouseWheel>", mousewheel_move)
-    root.bind("<Key>", show_lines)
-
+    enable_bindings("folder")
     make_tv(folder)
+
     left_frame.pack_forget()
     left_frame.pack(side=LEFT, fill=BOTH)
 
@@ -583,7 +618,6 @@ def folder_opener_hp():
     mode = "folder"   
     
 homepage = Frame(root, bd=0, relief=FLAT)
-#text = Label(homepage, text="Welcome to", fg="#595959", font=("Helvatica", "8")).pack()
 zetext = Label(homepage, text="ZeText", font=("Helvatica", "40"), fg="#4f555e").pack(pady=(0, 9))
 
 new_file_hp = Button(homepage, text="New File", command=new_file_opener_hp, bd=0, relief=FLAT, bg="#33b0ed", activebackground="#46b5ec", padx=4, width=22, height=2).pack(pady=6)
