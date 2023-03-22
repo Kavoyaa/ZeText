@@ -313,6 +313,9 @@ def save(e=None):
             code = editor.get("1.0", END)
             f.write(code)
 
+def new_window():
+    pass
+
 def open_file():
     global editor, image_label
 
@@ -347,7 +350,7 @@ nav_bar = Menu(root, background="#e3e4ea", bd=0, relief=FLAT)
 file_button = Menu(nav_bar, tearoff=0, background="#e3e4ea")
 
 file_button.add_command(label="New File")
-file_button.add_command(label="New Window")
+file_button.add_command(label="New Window", command=new_window)
 file_button.add_separator()
 file_button.add_command(label="Open File", command=open_file)
 file_button.add_command(label="Open Folder")
@@ -355,7 +358,7 @@ file_button.add_separator()
 file_button.add_command(label="Save", command=save, accelerator="Ctrl+S")
 file_button.add_command(label="Save As...", command=save_as)
 file_button.add_separator()
-file_button.add_command(label="Close Window")
+file_button.add_command(label="Close Window", command=exit)
 file_button.add_separator()
 file_button.add_command(label="Exit", command=exit)
 
@@ -374,16 +377,6 @@ run_button.add_command(label="Run", command=run, accelerator="F5")
 run_button.add_command(label="Set Run Command", command=set_run_command, accelerator="Ctrl+F5")
 
 nav_bar.add_cascade(label="Run", menu=run_button)
-
-# Output button
-output_button = Menu(nav_bar, tearoff=0, background="#e3e4ea", bd=0, relief=FLAT)
-
-output_button.add_command(label="Show Output", command=show_output)
-output_button.add_command(label="Hide Output", command=hide_output)
-output_button.add_command(label="Maximize", command=maximize_output_window)
-output_button.add_command(label="Minimize", command=minimize_output_window)
-
-nav_bar.add_cascade(label="Output", menu=output_button)
 
 # Theme button
 themes_button = Menu(nav_bar, tearoff=0, bd=0, relief=FLAT, background="#e3e4ea")
