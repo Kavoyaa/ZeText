@@ -82,7 +82,7 @@ class Homepage(tk.Frame):
         open_file.pack(pady=6)
 
         open_folder = tk.Button(self, 
-                             text="Open File",
+                             text="Open Folder",
                              bd=0, 
                              relief=tk.FLAT,
                              bg="#33b0ed",
@@ -115,6 +115,8 @@ class Homepage(tk.Frame):
 class RightFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
+
+        self.output_window_status = "visible"
 
         # Text area(line numbers and text widget)
         text_area = tk.Frame(self, bd=0, relief=tk.FLAT).pack(expand=True, fill=tk.BOTH)
@@ -149,7 +151,7 @@ class RightFrame(tk.Frame):
                                   anchor="w", 
                                   bd=0, 
                                   relief=tk.FLAT, 
-                                  command=NotImplemented)
+                                  command=lambda: self.toggle_output(output_window, output_toggle))
         output_toggle.pack(fill=tk.BOTH)
 
         output_window = tk.Text(output_area,
@@ -158,8 +160,19 @@ class RightFrame(tk.Frame):
                                 bd=0,
                                 relief=tk.FLAT,
                                 state=tk.DISABLED,
-                                font=("JetBrains Mono", 13))
+                                font=("JetBrains Mono", 13), bg="red")
         output_window.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+    
+    def toggle_output(self, widget_1, widget_2):
+        if self.output_window_status == "visible":
+           widget_1.pack_forget()
+           widget_2.config(text="OUTPUT ⮝")
+           self.output_window_status = "hidden"
+           
+        elif self.output_window_status == "hidden":
+            widget_1.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+            widget_2.config(text="OUTPUT ⮟")
+            self.output_window_status = "visible"
 
 class LeftFrame(tk.Frame):
     def __init__(self):
