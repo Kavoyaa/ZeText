@@ -101,7 +101,7 @@ class Homepage(tk.Frame):
         RightFrame(self.parent)
         self.parent.config(menu=NavBar(self.parent))
         self.parent.resizable(True, True)
-        self.parent.minsize(350, 800)
+        #self.parent.minsize(350, 800)
         
     def open_file(self):
         pass
@@ -118,19 +118,43 @@ class RightFrame(tk.Frame):
 
         self.output_window_status = "visible"
 
-        # Text area(line numbers and text widget)
-        text_area = tk.Frame(self, bd=0, relief=tk.FLAT).pack(expand=True, fill=tk.BOTH)
+        # Output area(output toggle button and output window)
+        output_area = tk.Frame(self,
+                               bd=0,
+                               relief=tk.FLAT)
+        output_area.pack(side=tk.BOTTOM, fill=tk.BOTH)
 
-        line_nums = tk.Text(text_area,
-                            highlightthickness=0,
-                            bd=0,
-                            width=5,
-                            relief=tk.FLAT,
-                            state=tk.DISABLED,
-                            font=("JetBrains Mono", 15)
-                            )
-        line_nums.tag_configure("right", justify="right")
-        line_nums.pack(side=tk.LEFT, fill=tk.BOTH, anchor="n")
+        output_toggle_button = tk.Button(output_area,
+                                         text="OUTPUT ⮟",
+                                         anchor="w",
+                                         bd=0,
+                                         relief=tk.FLAT,
+                                         command=self.toggle_output)
+        output_toggle_button.pack(fill=tk.BOTH)
+
+        self.output = tk.Text(output_area,
+                         height=9,
+                         highlightthickness=0,
+                         bd=0,
+                         relief=tk.FLAT,
+                         state=tk.DISABLED,
+                         font=("JetBrains Mono", 13))
+        self.output.pack(fill=tk.BOTH, expand=True)
+
+        # Text area(line numbers and the main text widget)
+        text_area = tk.Frame(self,
+                             bd=0,
+                             relief=tk.FLAT)
+        text_area.pack(expand=True, fill=tk.BOTH)
+
+        line_numbers = tk.Text(text_area,
+                               highlightthickness=0,
+                               bd=0,
+                               relief=tk.FLAT,
+                               state=tk.DISABLED,
+                               width=5,
+                               font=("JetBrains Mono", 13))
+        line_numbers.pack(side=tk.LEFT, fill=tk.BOTH, anchor="n")
 
         editor = tk.Text(text_area,
                          highlightthickness=0,
@@ -139,30 +163,20 @@ class RightFrame(tk.Frame):
                          wrap="none",
                          undo=True,
                          autoseparators=True,
-                         font=("JetBrains Mono", 15)
-                         )
-        editor.pack(expand=True, fill=tk.BOTH, padx=(5, 0))
+                         font=("JetBrains Mono", 13))
+        editor.pack(expand=True, fill=tk.BOTH, padx=(5,0))
 
-        # Output area(output window and toggle button)
-        output_area = tk.Frame(self, bd=0, relief=tk.FLAT).pack(side=tk.BOTTOM, fill=tk.BOTH)
-
-        output_toggle = tk.Button(output_area, 
-                                  text="OUTPUT ⮟", 
-                                  anchor="w", 
-                                  bd=0, 
-                                  relief=tk.FLAT, 
-                                  command=lambda: self.toggle_output(output_window, output_toggle))
-        output_toggle.pack(fill=tk.BOTH)
-
-        output_window = tk.Text(output_area,
-                                height=9,
-                                highlightthickness=0,
-                                bd=0,
-                                relief=tk.FLAT,
-                                state=tk.DISABLED,
-                                font=("JetBrains Mono", 13), bg="red")
-        output_window.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.pack(expand=True, fill=tk.BOTH)
     
+    def toggle_output(self):
+        if self.output_window_status == "visible":
+            self.output.pack_forget()
+            self.output_window_status = "hidden"
+        
+        elif self.output_window_status == "hidden":
+            self.output.pack(fill=tk.BOTH, expand=True)
+            self.output_window_status = "visible"
+    '''
     def toggle_output(self, widget_1, widget_2):
         if self.output_window_status == "visible":
            widget_1.pack_forget()
@@ -173,7 +187,7 @@ class RightFrame(tk.Frame):
             widget_1.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
             widget_2.config(text="OUTPUT ⮟")
             self.output_window_status = "visible"
-
+    '''
 class LeftFrame(tk.Frame):
     def __init__(self):
         super().__init__()
