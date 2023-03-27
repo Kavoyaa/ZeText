@@ -12,6 +12,7 @@ class App(tk.Tk):
         #self.navbar = NavBar(self)
         #self.config(menu=self.navbar)
         self.homepage = Homepage(self)
+        self.notifaction = Notification(self)
         #self.right = RightFrame(self)
         #self.homepage.place_forget()
 
@@ -64,6 +65,7 @@ class Homepage(tk.Frame):
                              padx=4,
                              width=22,
                              height=2,
+                             cursor="hand2",
                              command=self.new_file
                              )
         new_file.pack(pady=6)
@@ -77,6 +79,7 @@ class Homepage(tk.Frame):
                              padx=4,
                              width=22,
                              height=2,
+                             cursor="hand2",
                              command=self.open_file
                              )
         open_file.pack(pady=6)
@@ -90,6 +93,7 @@ class Homepage(tk.Frame):
                              padx=4,
                              width=22,
                              height=2,
+                             cursor="hand2",
                              command=self.open_folder
                              )
         open_folder.pack(pady=6)
@@ -101,7 +105,7 @@ class Homepage(tk.Frame):
         RightFrame(self.parent)
         self.parent.config(menu=NavBar(self.parent))
         self.parent.resizable(True, True)
-        self.parent.geometry("350x800")
+        self.parent.geometry("800x350")
         #self.parent.minsize(350, 800)
         
     def open_file(self):
@@ -117,6 +121,7 @@ class RightFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
 
+        self.parent = parent
         self.output_window_status = "visible"
 
         self.pane = tk.PanedWindow(self,
@@ -135,6 +140,7 @@ class RightFrame(tk.Frame):
                                          anchor="w",
                                          bd=0,
                                          relief=tk.FLAT,
+                                         cursor="hand2",
                                          command=self.toggle_output)
         self.output_toggle_button.pack(fill=tk.BOTH)
 
@@ -152,16 +158,17 @@ class RightFrame(tk.Frame):
                              relief=tk.FLAT)
         self.text_area.pack(expand=True, fill=tk.BOTH)
         
-        line_numbers = tk.Text(self.text_area,
+        self.line_numbers = tk.Text(self.text_area,
                                highlightthickness=0,
                                bd=0,
                                relief=tk.FLAT,
                                state=tk.DISABLED,
                                width=5,
                                font=("JetBrains Mono", 13))
-        line_numbers.pack(side=tk.LEFT, fill=tk.BOTH, anchor="n")
+        self.line_numbers.tag_configure("right", justify="right")
+        self.line_numbers.pack(side=tk.LEFT, fill=tk.BOTH, anchor="n")
 
-        editor = tk.Text(self.text_area,
+        self.editor = tk.Text(self.text_area,
                          highlightthickness=0,
                          bd=0,
                          relief=tk.FLAT,
@@ -169,15 +176,20 @@ class RightFrame(tk.Frame):
                          undo=True,
                          autoseparators=True,
                          font=("JetBrains Mono", 13))
-        editor.pack(expand=True, fill=tk.BOTH, padx=(5,0))
+        self.editor.pack(expand=True, fill=tk.BOTH, padx=(5,0))
 
         self.pane.add(self.text_area)
         self.pane.add(self.output_area)
         self.pane.paneconfig(self.output_area, minsize=50)
         self.pane.paneconfig(self.text_area, minsize=50)
 
+        # Bindings
+        self.parent.bind("<MouseWheel>", self.on_mousewheel_move)
+        self.parent.bind("<Key>", self.generate_line_numbers)
+
         self.pack(expand=True, fill=tk.BOTH)
     
+    # Commands
     def toggle_output(self):
         if self.output_window_status == "visible":
             self.pane.remove(self.output_area)
@@ -192,12 +204,32 @@ class RightFrame(tk.Frame):
             self.output_toggle_button.config(text="OUTPUT ⮟")
 
             self.pane.add(self.output_area)
+            self.pane.paneconfig(self.output_area, minsize=50)
 
             self.output_window_status = "visible"
+    
+    def generate_line_numbers(self, e):
+        numbers = ""
+        for i in range(int(self.editor.index("end").split(".")[0])-1):
+            numbers += " " + str(i + 1) + " \n"
+    
+        self.line_numbers.configure(state=tk.NORMAL)
+        self.line_numbers.delete("1.0", tk.END)
+        self.line_numbers.insert("1.0", numbers[:-1])
+        self.line_numbers.tag_add("right", 1.0, "end")
+        self.line_numbers.configure(state=tk.DISABLED)
+        self.line_numbers.yview_moveto(float(self.editor.yview()[0]))
+    
+    def on_mousewheel_move(self, e):
+        self.line_numbers.yview_moveto(float(self.editor.yview()[0]))
 
 class LeftFrame(tk.Frame):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
+
+class Notification(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
 
 if __name__ == "__main__":
     App("ZeText Rewrite")
